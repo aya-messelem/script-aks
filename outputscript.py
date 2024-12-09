@@ -1,25 +1,19 @@
 import pandas as pd
 
-file_path = r'c:\Users\ayame\Downloads\Log intern - Analyst case study.xlsx'  
-output_file_path = r'c:\Users\ayame\OneDrive\Desktop\AKS solution\output.xlsx'  
+file_path = r"c:\Users\ayame\OneDrive\Desktop\aks case\Log intern - Analyst case study.xlsx"
 
-excel_data = pd.ExcelFile(file_path)
-data_brands = excel_data.parse('Data brands')
-data_orders = excel_data.parse('Data orders')
+df_orders = pd.read_excel(file_path, sheet_name='Data orders')  
+df_sync = pd.read_excel(file_path, sheet_name='Data brands')    
 
-ff_synced_brands = data_brands[data_brands['fg_ff_sync*'] == True]['uuid_brand']
+print("Colonnes dans df_orders :", df_orders.columns)
+print("Colonnes dans df_sync :", df_sync.columns)
 
-filtered_orders = data_orders[data_orders['uuid_brand'].isin(ff_synced_brands)]
+df_merged = df_orders.merge(df_sync, on='uuid_brand', how='inner', suffixes=('_orders', '_brands'))
+print("Fusion réussie. Colonnes dans df_merged :", df_merged.columns)
 
-order_counts = filtered_orders.groupby(['uuid_brand', 'Order reference']).size().reset_index(name='number_of_orders')
 
-order_counts = order_counts.rename(columns={
-    'uuid_brand': 'uuid_brand',
-    'number_of_orders': 'number of orders per reference',
-    'Order reference': 'order reference'
-})
-
-order_counts.to_excel(output_file_path, index=False)
-
-print(f"Output successfully written to {output_file_path}")
+if 'fg_ff_sync*_orders' in df_merged.columns:
+    ff_synced_brands = df_merged[df_merged['fg_ff_sync*_orders'].notna()]
+    print(f"{len(ff_synced_brands)} marques synchronisées FF trouvées.")
+    
 
